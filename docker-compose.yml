@@ -1,0 +1,46 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    image: leonovandreydpo43/media-crm-1-backend
+    container_name: jar-prod
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nginx:
+    image: leonovandreydpo43/media-crm-1-frontend
+    container_name: nginx-prod
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data: {}

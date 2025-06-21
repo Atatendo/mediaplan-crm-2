@@ -3,12 +3,14 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    tailwindcss(),
   ],
   define: {
     __APP_ENV__: JSON.stringify(process.env.VITE_API_URL),
@@ -25,6 +27,10 @@ export default defineConfig({
         target: 'http://backend:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/ws': {                     // 👈 Вот этого не хватает
+        target: 'http://backend:8080',
+        ws: true                   // 👈 Важно! Разрешает WS-прокси
       }
     },    
     allowedHosts: ['frontend']

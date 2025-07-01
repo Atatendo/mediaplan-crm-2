@@ -1,65 +1,81 @@
 <template>
   <div class="flex h-screen">
     <SidebarMenu :items="items" />
-    <main class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-gray-800">
-      <router-view />
+    <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800">
+      <MenuBar class="border-0 shadow-none" />
+      <router-view class="p-6"/>
     </main>
   </div>
 </template>
 
 <script setup>
 import SidebarMenu from '../components/SidebarMenu.vue'
+import MenuBar from '../components/MenuBar.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
 const items = [
   {
-    separator: true
-  },
-  {
-    label: 'Documents',
+    label: 'Планирование',
     items: [
       {
-        label: 'New',
-        icon: 'pi pi-plus',
-        to: '/new',
-        shortcut: '⌘+N'
+        label: 'Главная',
+        icon: ['fas', 'home'],
+        to: '/',
+        class: '',
       },
       {
-        label: 'Search',
-        icon: 'pi pi-search',
-        to: '/search',
-        shortcut: '⌘+S'
-      }
-    ]
+        label: 'Медиаплан',
+        icon: ['fas', 'calendar'],
+        to: '/mediaplan',
+      },
+      {
+        label: 'Ссылки',
+        icon: ['fas', 'external-link'],
+        to: '/mediaplan',
+      },
+    ],
   },
   {
-    label: 'Profile',
+    separator: true,
+  },
+  {
+    label: 'Справочно',
     items: [
       {
-        label: 'Settings',
-        icon: 'pi pi-cog',
+        label: 'Список СМИ',
+        icon: ['fas', 'list-alt'],
         to: '/settings',
-        shortcut: '⌘+O'
+        //shortcut: '⌘+O',
       },
       {
-        label: 'Messages',
-        icon: 'pi pi-inbox',
+        label: 'Техническое оснащение',
+        icon: ['fas', 'camera'],
         badge: 2,
-        to: '/messages'
-      }
-    ]
+        to: '/messages',
+      },
+    ],
   },
   {
-    separator: true
+    separator: true,
   },
   {
-    label: 'Exit',
-    icon: ['fas', 'sign-out-alt'],
-    shortcut: 'ctrl+X',
-    command: () => logout()
-  }
+    label: '',
+    items: [
+      {
+        label: 'Настройки',
+        icon: ['fas', 'cog'],
+        to: '/settings',
+        //shortcut: '⌘+O',
+      },
+      {
+        label: 'Выход',
+        icon: ['fas', 'sign-out'],
+        command: () => logout(),
+      },
+    ],
+  },
 ]
 
 function logout() {

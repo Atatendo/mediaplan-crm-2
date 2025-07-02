@@ -60,26 +60,8 @@ const items = [
   {
     separator: true,
   },
-  {
-    label: '',
-    items: [
-      {
-        label: 'Настройки',
-        icon: ['fas', 'cog'],
-        to: '/settings',
-        //shortcut: '⌘+O',
-      },
-      {
-        label: 'Выход',
-        icon: ['fas', 'sign-out'],
-        command: () => logout(),
-      },
-    ],
-  },
+  
 ]
 
-function logout() {
-  localStorage.removeItem('token')
-  router.push('/login')
-}
+
 </script>

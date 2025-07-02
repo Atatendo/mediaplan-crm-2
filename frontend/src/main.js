@@ -19,11 +19,17 @@ config.autoAddCss = false;
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 
+import Accordion from 'primevue/accordion';
+import AccordionPanel from 'primevue/accordionpanel';
+import AccordionHeader from 'primevue/accordionheader';
+import AccordionContent from 'primevue/accordioncontent';
 import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
-import Card from 'primevue/card'
-import Checkbox from 'primevue/checkbox'
+import Card from 'primevue/card';
+import Checkbox from 'primevue/checkbox';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable'
 import Dock from 'primevue/dock';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -46,11 +52,17 @@ app.use(PrimeVue, {
 
 app.use(router);
 
+app.component('Accordion', Accordion);
+app.component('AccordionPanel', AccordionPanel);
+app.component('AccordionHeader', AccordionHeader);
+app.component('AccordionContent', AccordionContent);
 app.component('Avatar', Avatar);
 app.component('Badge', Badge);
 app.component('Button', Button);
 app.component('Card', Card);
 app.component('Checkbox', Checkbox);
+app.component('Column', Column);
+app.component('DataTable', DataTable);
 app.component('Dock', Dock);
 app.component('InputText', InputText);
 app.component('Menu', Menu);

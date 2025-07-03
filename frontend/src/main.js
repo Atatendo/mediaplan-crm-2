@@ -4,7 +4,7 @@ import router from './router';
 import Ripple from 'primevue/ripple'
 import './index.css';
 import './assets/scss/main.scss'
-
+import { ru } from './locales/ru';
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -26,9 +26,11 @@ import AccordionContent from 'primevue/accordioncontent';
 import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
+import Calendar from 'primevue/calendar';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
+import DatePicker from 'primevue/datepicker';
 import DataTable from 'primevue/datatable'
 import Dock from 'primevue/dock';
 import InputText from 'primevue/inputtext';
@@ -45,9 +47,10 @@ const app = createApp(App);
 
 app.directive('ripple', Ripple); 
 app.use(PrimeVue, {
-    theme: {
-        preset: Aura
-    }
+    theme: {        
+        preset: Aura    
+    },
+    locale: ru,
 });
 
 app.use(router);
@@ -59,10 +62,12 @@ app.component('AccordionContent', AccordionContent);
 app.component('Avatar', Avatar);
 app.component('Badge', Badge);
 app.component('Button', Button);
+app.component('Calendar', Calendar);
 app.component('Card', Card);
 app.component('Checkbox', Checkbox);
 app.component('Column', Column);
 app.component('DataTable', DataTable);
+app.component('DatePicker', DatePicker);
 app.component('Dock', Dock);
 app.component('InputText', InputText);
 app.component('Menu', Menu);

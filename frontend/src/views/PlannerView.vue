@@ -11,13 +11,14 @@
         <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
       </Button>
     </div>
-    <Accordion multiple>
+    <Accordion multiple class="mt-2">
       <AccordionPanel v-for="numberOfWeek in weekRange" :key="numberOfWeek" :value="numberOfWeek">
         <AccordionHeader>{{ numberOfWeek }} неделя </AccordionHeader>
         <AccordionContent>
           <div class="grid grid-cols-7 gap-4">
-            <div v-for="day in getDaysOfWeek(week)" :key="day.formattedDate" class="flex items-center justify-center border-1 rounded-10 flex bg-teal-400 m-2">
-            {{ day.dayName }}
+            <div v-for="day in getDaysOfWeek(numberOfWeek)" :key="day.formattedDate" class="flex flex-col items-center justify-center border-1 rounded-10 flex bg-teal-400 m-2">
+            <span>{{ day.dayName }}</span>
+            <span>{{ day.date }}</span>
           </div>
           </div>
           
@@ -30,9 +31,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 
-// реактивное состояние
-//const numberOfWeekStart =ref(1)
-const numberOfWeekEnd = ref(5)
 const currentDate = ref(new Date())
 const currentMonthNumber = ref(currentDate.value.getMonth())
 
@@ -63,7 +61,7 @@ const lastWeekOfMonth = computed(() => {
   const startOfYear = new Date(year, 0, 1)
   const lastDay = new Date(year, month + 1, 0)
   const days = Math.floor((lastDay - startOfYear) / (24 * 60 * 60 * 1000))
-  const weekNumber = Math.ceil((days + ((startOfYear.getDay() + 1) % 7)) / 7)
+  const weekNumber = Math.ceil((days + ((startOfYear.getDay() + 0) % 7)) / 7)
   if (weekNumber === 53) return 1
   return weekNumber
 })
@@ -78,11 +76,6 @@ const weekRange = computed(() => {
   return weeks
 })
 
-const firstDayOfWeek = computed(() => {
-  
-})
-
-// функции которые мутируют состояние и вызывают обновления
 function nextMonth() {
   currentMonthNumber.value++
 }
@@ -97,9 +90,9 @@ function prevMonth() {
 function getMondayOfISOWeek(weekNumber, year) {
   const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7)
   const firstDayOfWeek = simple.getDay()
-  const mondayOffset = firstDayOfWeek === 1 ? 0 : firstDayOfWeek < 4 ? 1 : -3
   const thursday = new Date(simple.setDate(simple.getDate() + 4 - firstDayOfWeek))
   const monday = new Date(thursday.setDate(thursday.getDate() - 3))
+  console.log(monday)
   return monday
 }
 
@@ -140,18 +133,13 @@ function formatDate(date) {
 }
 
 // Название месяца
-function getMonthName(monthIndex) {
-  const months = [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-  ]
-  return months[monthIndex]
-}
+function getMonthName(month) {
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            return months[month];
+        }
 
 
 // хуки жизненного цикла
 onMounted(() => {
-  console.log(firstWeekOfMonth.value)
-  console.log(lastWeekOfMonth.value)
 })
 </script>

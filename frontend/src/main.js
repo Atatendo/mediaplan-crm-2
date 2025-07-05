@@ -37,8 +37,8 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import Menubar from 'primevue/menubar';
 import Message from 'primevue/message'
+import Popover from 'primevue/popover'
 import Password from 'primevue/password'
-
 
 // Регистрация иконок
 library.add(fas, far, fab);
@@ -73,7 +73,10 @@ app.component('InputText', InputText);
 app.component('Menu', Menu);
 app.component('Menubar', Menubar);
 app.component('Message', Message);
+app.component('Popover', Popover);
 app.component('Password', Password);
+
+
 
 app.component('FontAwesomeIcon', FontAwesomeIcon);
 app.mount('#app');

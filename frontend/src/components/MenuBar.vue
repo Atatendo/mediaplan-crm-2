@@ -1,10 +1,10 @@
 <template>
-  <div class="card">
+  <div class="border-0 shadow-none">
     <Menubar class="flex">
       
       <template #end>
-        <div class="card flex justify-center">
-          <Menu ref="menuRef" :popup="true" :model="items" @show="isUserMenuOpen = true" @hide="isUserMenuOpen = false"/>
+        <div class="card flex justify-center border-0 shadow-none">
+          <Menu ref="menuRef" :popup="true" :model="items" @show="isUserMenuOpen = true" @hide="isUserMenuOpen = false" border-0 shadow-none/>
         </div>
 
         <button @click="toggleUserMenu" class="flex items-center gap-3 cursor-pointer focus:outline-none">

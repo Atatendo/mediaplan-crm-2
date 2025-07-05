@@ -1,31 +1,63 @@
 <template>
   <div class="calendar w-full mx-auto">
-    <div class="flex items-center">
+    <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
+      
       <Button @click="prevMonth">
         <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
       </Button>
+
       <div class="flex items-center justify-center min-w-[20ch] font-bold">
-        {{ formattedMonthYearTitle }}
+        <span @click="toggleMonthPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-100 rounded">
+          {{ currentMonthName }}
+        </span>
+        <span @click="toggleYearPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-100 rounded">
+          {{ currentYear }}
+        </span>
       </div>
+      
       <Button @click="nextMonth">
         <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
       </Button>
+
+      <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }">
+        <div class="grid grid-cols-3 gap-1">
+          <template v-for="(m, i) in monthNames" :key="i">
+            <button @click="selectMonth(i)" class="py-1 px-3 rounded hover:bg-blue-100"
+              :class="{ 'bg-emerald-500 text-white': i === currentMonth }">
+              {{ m }}
+            </button>
+          </template>
+        </div>
+      </Popover>
+
+      <Popover ref="yearPanel" :pt="{ root: { class: 'z-50' } }">
+        <div class="grid grid-cols-2 gap-1">
+          <template v-for="y in yearRange" :key="y">
+            <button @click="selectYear(y)" class="py-1 px-3 rounded hover:bg-blue-100"
+              :class="{ 'bg-emerald-500 text-white': y === currentYear }">
+              {{ y }}
+            </button>
+          </template>
+        </div>
+      </Popover>
     </div>
-    <Accordion multiple class="mt-2">
-      <AccordionPanel v-for="numberOfWeek in weekRange" :key="numberOfWeek" :value="numberOfWeek">
-        <AccordionHeader>{{ numberOfWeek }} неделя </AccordionHeader>
-        <AccordionContent>
-          <div class="grid grid-cols-7 gap-4">
-            <div v-for="day in getDaysOfWeek(numberOfWeek)" :key="day.formattedDate" class="flex flex-col items-center justify-center border-1 rounded-10 flex bg-teal-400 m-2">
+  </div>
+  <Accordion multiple class="mt-2">
+    <AccordionPanel v-for="numberOfWeek in weekRange" :key="numberOfWeek" :value="numberOfWeek">
+      <AccordionHeader>{{ numberOfWeek }} неделя </AccordionHeader>
+      <AccordionContent>
+        <div class="grid grid-cols-7 gap-4">
+          <div v-for="(day, index) in getDaysOfWeek(numberOfWeek)" :key="day.formattedDate"
+            class="w-full flex flex-col items-center justify-center font-bold rounded-xl m-2" :style="{
+              background: index > 4 ? '#ef4444' : '#22d3ee',
+            }">
             <span>{{ day.dayName }}</span>
             <span>{{ day.date }}</span>
           </div>
-          </div>
-          
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
-  </div>
+        </div>
+      </AccordionContent>
+    </AccordionPanel>
+  </Accordion>
 </template>
 
 <script setup>
@@ -75,14 +107,6 @@ const weekRange = computed(() => {
   }
   return weeks
 })
-
-function nextMonth() {
-  currentMonthNumber.value++
-}
-
-function prevMonth() {
-  currentMonthNumber.value--
-}
 
 // === Вспомогательные функции ===
 
@@ -134,10 +158,13 @@ function formatDate(date) {
 
 // Название месяца
 function getMonthName(month) {
-            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-            return months[month];
-        }
+  const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  return months[month];
+}
 
+const toggleMonthPanel = (event) => {
+  monthPanel.value.toggleMonthPanel(event)
+}
 
 // хуки жизненного цикла
 onMounted(() => {

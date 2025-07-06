@@ -3,7 +3,7 @@
     <SidebarMenu :items="items" />
     <main class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800">
       <MenuBar class="border-0 shadow-none" />
-      <router-view class="p-6"/>
+      <router-view/>
     </main>
   </div>
 </template>

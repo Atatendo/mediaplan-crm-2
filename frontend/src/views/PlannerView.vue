@@ -2,15 +2,15 @@
   <div class="calendar w-full mx-auto">
     <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
       
-      <Button @click="prevMonth">
+      <Button @click="prevMonth" class="">
         <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
       </Button>
 
-      <div class="flex items-center justify-center min-w-[20ch] font-bold">
-        <span @click="toggleMonthPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-100 rounded">
+      <div class="flex flex-col items-center justify-center min-w-[16ch] font-bold ml-2 mr-2">
+        <span @click="toggleMonthPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
           {{ currentMonthName }}
         </span>
-        <span @click="toggleYearPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-100 rounded">
+        <span @click="toggleYearPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
           {{ currentYear }}
         </span>
       </div>
@@ -43,16 +43,16 @@
     </div>
   </div>
   <Accordion multiple class="mt-2">
-    <AccordionPanel v-for="numberOfWeek in weekRange" :key="numberOfWeek" :value="numberOfWeek">
-      <AccordionHeader>{{ numberOfWeek }} неделя </AccordionHeader>
+    <AccordionPanel v-for="week in calendarData" :value="week.weekNumber">
+      <AccordionHeader>{{ week.weekNumber }} неделя </AccordionHeader>
       <AccordionContent>
         <div class="grid grid-cols-7 gap-4">
-          <div v-for="(day, index) in getDaysOfWeek(numberOfWeek)" :key="day.formattedDate"
+          <div v-for="day in week.days" :key="day.formattedDate"
             class="w-full flex flex-col items-center justify-center font-bold rounded-xl m-2" :style="{
               background: index > 4 ? '#ef4444' : '#22d3ee',
             }">
             <span>{{ day.dayName }}</span>
-            <span>{{ day.date }}</span>
+            <span>{{ day.titleDate }}</span>
           </div>
         </div>
       </AccordionContent>
@@ -62,111 +62,134 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { MONTHS } from '@/constants/date'
 
 const currentDate = ref(new Date())
 const currentMonthNumber = ref(currentDate.value.getMonth())
+const currentYear = ref(currentDate.value.getFullYear())
+const calendarData = ref(null)
 
-const reactiveDate = computed(() => {
-  const year = currentDate.value.getFullYear()
-  return new Date(year, currentMonthNumber.value, 1)
-})
-
-const formattedMonthYearTitle = computed(() => {
-  const date = reactiveDate.value
-  const month = date.toLocaleString('ru', { month: 'long' })
-  const year = date.getFullYear()
-  const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1)
-  return `${capitalizedMonth} ${year}`
-})
-
-const firstWeekOfMonth = computed(() => {
-  const startOfYear = new Date(reactiveDate.value.getFullYear(), 0, 1)
-  const days = Math.floor((reactiveDate.value - startOfYear) / (24 * 60 * 60 * 1000))
-  const weekNumber = Math.ceil((days + ((startOfYear.getDay() + 1) % 7)) / 7)
-  if (weekNumber === 53) return 1
-  return weekNumber
-})
-
-const lastWeekOfMonth = computed(() => {
-  const year = reactiveDate.value.getFullYear()
-  const month = reactiveDate.value.getMonth()
-  const startOfYear = new Date(year, 0, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const days = Math.floor((lastDay - startOfYear) / (24 * 60 * 60 * 1000))
-  const weekNumber = Math.ceil((days + ((startOfYear.getDay() + 0) % 7)) / 7)
-  if (weekNumber === 53) return 1
-  return weekNumber
-})
-
-const weekRange = computed(() => {
-  const start = firstWeekOfMonth.value
-  const end = lastWeekOfMonth.value
-  const weeks = []
-  for (let i = start; i <= end; i++) {
-    weeks.push(i)
-  }
-  return weeks
-})
-
-// === Вспомогательные функции ===
-
-// Получить понедельник по номеру недели (ISO 8601)
-function getMondayOfISOWeek(weekNumber, year) {
-  const simple = new Date(year, 0, 1 + (weekNumber - 1) * 7)
-  const firstDayOfWeek = simple.getDay()
-  const thursday = new Date(simple.setDate(simple.getDate() + 4 - firstDayOfWeek))
-  const monday = new Date(thursday.setDate(thursday.getDate() - 3))
-  console.log(monday)
-  return monday
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? - 6 : 1);
+  return new Date(d.setDate(diff));
 }
 
-// Получить дни недели по её номеру
-function getDaysOfWeek(weekNumber) {
-  const year = reactiveDate.value.getFullYear()
-  const monday = getMondayOfISOWeek(weekNumber, year)
+const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 
-  const daysOfWeek = [
-    'Понедельник',
-    'Вторник',
-    'Среда',
-    'Четверг',
-    'Пятница',
-    'Суббота',
-    'Воскресенье',
-  ]
+function getDayName(date) {
+  return dayNames[date.getDay()];
+}
 
-  return daysOfWeek.map((dayName, index) => {
-    const date = new Date(monday)
-    date.setDate(monday.getDate() + index)
-    return {
-      dayName,
-      date: `${date.getDate()} ${getMonthName(date.getMonth())}`,
-      fullDate: date,
-      formattedDate: formatDate(date),
+function getMonthStructure(year, month) {
+  const weeks = [];
+  let currentDate = getMonday(new Date(year, month, 1));
+
+  do {
+    const weekDays = [];
+
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(currentDate);
+
+      weekDays.push({
+        date: formatDate(current),
+        year: current.getFullYear(),
+        month: current.getMonth(),
+        day: current.getDate(),
+        dayName: getDayName(current),
+        titleDate: titleDate(current.getDate(), current.getMonth()),
+        inCurrentMonth: current.getMonth() === month
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
     }
-  })
+
+    // Получаем дату первого дня недели
+    const firstDayOfWeek = new Date(weekDays[0].year, weekDays[0].month, weekDays[0].day);
+    const weekNumber = getISOWeekNumber(firstDayOfWeek); // ✅ Передаём первый день недели
+
+    weeks.push({
+      weekNumber,
+      year: weekDays[0].year,
+      days: weekDays
+    });
+
+  } while (
+    currentDate.getMonth() === month || // продолжаем пока месяц совпадает
+    currentDate.getDay() !== 1 // или до следующего понедельника
+  );
+
+  return weeks;
 }
 
-// Форматирование даты
 function formatDate(date) {
-  const d = new Date(date)
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-  return `${year}-${month}-${day}`
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
 }
 
-// Название месяца
-function getMonthName(month) {
-  const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-  return months[month];
+function titleDate(day, month) {
+    return `${day} ${MONTHS.genitive[month]}`;
 }
 
+
+/*const reactiveDate = computed(() => {
+  return new Date(currentYear.value, currentMonthNumber.value, 1)
+})*/
+
+const currentMonthName = computed(() => {
+  return MONTHS.accusativeFirstUpper[currentMonthNumber.value]
+})
+
+function getISOWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const dayOfWeek = d.getDay();    
+    const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+
+    const yearStart = new Date(monday.getFullYear(), 0, 1);
+    const yearStartMonday = new Date(yearStart);
+    const startDay = yearStart.getDay();
+    yearStartMonday.setDate(yearStart.getDate() + (startDay === 1 ? 0 : startDay > 1 ? 8 - startDay : 1));
+
+    const weekNumber = Math.round((((monday - yearStartMonday) / 86400000) + yearStartMonday.getDate() - 1) / 7) + 1;
+    return weekNumber;
+}
+
+function nextMonth() {
+  if (currentMonthNumber.value === 11) {
+      currentMonthNumber.value = 0;
+      currentYear.value++; 
+  } 
+  else {
+    currentMonthNumber.value++;
+  }
+  monthStructureUpdate()
+}
+
+function prevMonth() {
+  if (currentMonthNumber.value === 0) {
+      currentMonthNumber.value = 11;
+      currentYear.value--; 
+  } 
+  else {
+    currentMonthNumber.value--;
+  }
+  monthStructureUpdate()
+}
+
+function monthStructureUpdate() {
+  calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value);
+}
 const toggleMonthPanel = (event) => {
   monthPanel.value.toggleMonthPanel(event)
 }
 
 // хуки жизненного цикла
-onMounted(() => {
+onMounted(() => {  
+  monthStructureUpdate()
 })
 </script>

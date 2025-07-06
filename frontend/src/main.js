@@ -5,6 +5,7 @@ import Ripple from 'primevue/ripple'
 import './index.css';
 import './assets/scss/main.scss'
 import { ru } from './locales/ru';
+
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

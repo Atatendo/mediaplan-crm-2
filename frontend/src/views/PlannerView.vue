@@ -1,7 +1,6 @@
 <template>
   <div class="calendar w-full mx-auto">
     <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
-      
       <Button @click="prevMonth" class="">
         <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
       </Button>
@@ -14,16 +13,21 @@
           {{ currentYear }}
         </span>
       </div>
-      
+
       <Button @click="nextMonth">
         <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
       </Button>
+      <label for="toggle-all" class="mr-2 ml-2">Развернуть все</label>
+      <ToggleSwitch v-model="toggleAll" inputId="toggle-all" />
 
       <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }">
         <div class="grid grid-cols-3 gap-1">
-          <template v-for="(m, i) in monthNames" :key="i">
-            <button @click="selectMonth(i)" class="py-1 px-3 rounded hover:bg-blue-100"
-              :class="{ 'bg-emerald-500 text-white': i === currentMonth }">
+          <template v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i">
+            <button
+              @click="selectMonth(i)"
+              class="py-1 px-3 rounded hover:bg-blue-100"
+              :class="{ 'bg-emerald-500 text-white': i === currentMonthNumber }"
+            >
               {{ m }}
             </button>
           </template>
@@ -32,32 +36,86 @@
 
       <Popover ref="yearPanel" :pt="{ root: { class: 'z-50' } }">
         <div class="grid grid-cols-2 gap-1">
-          <template v-for="y in yearRange" :key="y">
-            <button @click="selectYear(y)" class="py-1 px-3 rounded hover:bg-blue-100"
-              :class="{ 'bg-emerald-500 text-white': y === currentYear }">
+          <template v-for="y in YEARS" :key="y">
+            <button
+              @click="selectYear(y)"
+              class="py-1 px-3 rounded hover:bg-blue-100"
+              :class="{ 'bg-emerald-500 text-white': y === currentYear }"
+            >
               {{ y }}
             </button>
           </template>
         </div>
       </Popover>
     </div>
-  </div>
-  <Accordion multiple class="mt-2">
-    <AccordionPanel v-for="week in calendarData" :value="week.weekNumber">
-      <AccordionHeader>{{ week.weekNumber }} неделя </AccordionHeader>
-      <AccordionContent>
-        <div class="grid grid-cols-7 gap-4">
-          <div v-for="day in week.days" :key="day.formattedDate"
-            class="w-full flex flex-col items-center justify-center font-bold rounded-xl m-2" :style="{
-              background: index > 4 ? '#ef4444' : '#22d3ee',
-            }">
-            <span>{{ day.dayName }}</span>
-            <span>{{ day.titleDate }}</span>
+    <Accordion multiple class="mt-2">
+      <AccordionPanel v-for="week in calendarData" :value="week.weekNumber" :key="week.weekNumber">
+        <AccordionHeader
+          >{{ week.weekNumber }} неделя | c {{ week.days[0].titleDate }} по
+          {{ week.days[6].titleDate }}</AccordionHeader
+        >
+        <AccordionContent>
+          <div class="grid grid-cols-7 gap-2" mt-2>
+            <div v-for="day in week.days" :key="day.date">
+              <div
+                class="w-full flex flex-col items-center justify-center font-bold rounded-xl"
+                :style="{
+                  background: day.dayIndex > 4 ? '#ef4444' : '#22d3ee',
+                }"
+              >
+                <span>{{ day.dayName }}</span>
+                <span>{{ day.titleDate }}</span>
+              </div>
+              <div class="flex flex-col justify-center mt-2 gap-2">
+                <ItemPost
+                  v-for="event in eventsByDate[day.date]"
+                  :key="event.id"
+                  :region="event.region"
+                  :text="event.text"
+                  :performer="event.performer"
+                />
+                <Button class="mx-auto max-w-fit" :key="day.date" @click="() => addEvent(day.currentDate)">
+                  <FontAwesomeIcon :icon="['fas', 'plus']" />
+                </Button>                
+              </div>
+            </div>
           </div>
-        </div>
-      </AccordionContent>
-    </AccordionPanel>
-  </Accordion>
+        </AccordionContent>
+      </AccordionPanel>
+    </Accordion>
+    <Dialog
+                  v-model:visible="visible"
+                  modal
+                  closeOnEscape
+                  header="Добавить мероприятие"
+                  :pt="{
+      headerActions: {
+        style: { display: 'none' }
+      }
+    }"
+                >
+                <div>
+                  <DatePicker  v-model="selectedDate" dateFormat="dd.mm.yy" :showIcon="true" class="w-full"/>
+                </div>
+                  <div class="flex items-center gap-4 mb-4">
+                    <label for="username" class="font-semibold w-24">Username</label>
+                    <InputText id="username" class="flex-auto" autocomplete="off" />
+                  </div>
+                  <div class="flex items-center gap-4 mb-8">
+                    <label for="email" class="font-semibold w-24">Email</label>
+                    <InputText id="email" class="flex-auto" autocomplete="off" />
+                  </div>
+                  <div class="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      label="Cancel"
+                      severity="secondary"
+                      @click="visible = false"
+                    ></Button>
+                    <Button type="button" label="Save" @click="visible = false"></Button>
+                  </div>
+                </Dialog>
+  </div>
 </template>
 
 <script setup>
@@ -68,128 +126,299 @@ const currentDate = ref(new Date())
 const currentMonthNumber = ref(currentDate.value.getMonth())
 const currentYear = ref(currentDate.value.getFullYear())
 const calendarData = ref(null)
+const monthPanel = ref()
+const yearPanel = ref()
 
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? - 6 : 1);
-  return new Date(d.setDate(diff));
+const visible = ref(false)
+const selectedDate = ref(null)
+
+function addEvent(date) {
+  visible.value = true;
+  selectedDate.value = date;
 }
 
-const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+const toggleAll = ref(false)
+
+function getMonday(date) {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  return new Date(d.setDate(diff))
+}
+
+const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
+
+const YEARS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028']
+const eventsByDate = computed(() => {
+  const map = {}
+  eventsData.value.forEach((event) => {
+    const date = event.date
+    if (!map[date]) map[date] = []
+    map[date].push(event)
+  })
+  return map
+})
+
+const eventsData = ref([
+  // 📅 Июнь 2025
+  {
+    id: 1,
+    region: 'Москва',
+    text: 'Концерт группы "Любэ"',
+    performer: 'Любэ',
+    date: '2025-06-30',
+  },
+
+  // 📅 Июль 2025
+  {
+    id: 2,
+    region: 'Санкт-Петербург',
+    text: 'Выставка современного искусства',
+    performer: 'Галерея "Арт-Пространство"',
+    date: '2025-07-03',
+  },
+  {
+    id: 3,
+    region: 'Екатеринбург',
+    text: 'Технологическая конференция',
+    performer: 'IT Experts Group',
+    date: '2025-07-05',
+  },
+  {
+    id: 4,
+    region: 'Новосибирск',
+    text: 'Научный симпозиум',
+    performer: 'Сибирская академия наук',
+    date: '2025-07-06',
+  },
+  {
+    id: 5,
+    region: 'Казань',
+    text: 'Фестиваль татарской культуры',
+    performer: 'Национальный культурный центр',
+    date: '2025-07-08',
+  },
+  {
+    id: 6,
+    region: 'Сочи',
+    text: 'Музыкальный фестиваль «Black Sea Fest»',
+    performer: 'DJ Max & Friends',
+    date: '2025-07-10',
+  },
+  {
+    id: 7,
+    region: 'Владивосток',
+    text: 'Фудмаркет у моря',
+    performer: 'Local Street Food',
+    date: '2025-07-12',
+  },
+  {
+    id: 8,
+    region: 'Москва',
+    text: 'Фестиваль уличной еды',
+    performer: 'Street Food Team',
+    date: '2025-07-15',
+  },
+  {
+    id: 9,
+    region: 'Санкт-Петербург',
+    text: 'Джазовый вечер на набережной',
+    performer: 'Jazz Band',
+    date: '2025-07-17',
+  },
+  {
+    id: 10,
+    region: 'Екатеринбург',
+    text: 'Рок-фестиваль',
+    performer: 'Rock Legends',
+    date: '2025-07-19',
+  },
+  {
+    id: 11,
+    region: 'Новосибирск',
+    text: 'Праздник города',
+    performer: 'Городская администрация',
+    date: '2025-07-20',
+  },
+  {
+    id: 12,
+    region: 'Казань',
+    text: 'Международная ярмарка ремёсел',
+    performer: 'Гильдия мастеров',
+    date: '2025-07-22',
+  },
+  {
+    id: 13,
+    region: 'Сочи',
+    text: 'Фестиваль кино и документальных фильмов',
+    performer: 'Киносоюз РФ',
+    date: '2025-07-24',
+  },
+  {
+    id: 14,
+    region: 'Владивосток',
+    text: 'Фестиваль азиатского кино',
+    performer: 'Дальневосточный киноклуб',
+    date: '2025-07-27',
+  },
+  {
+    id: 15,
+    region: 'Москва',
+    text: 'Концерт молодых исполнителей',
+    performer: 'PRIMORSK Music School',
+    date: '2025-07-29',
+  },
+  {
+    id: 16,
+    region: 'Санкт-Петербург',
+    text: 'Театрализованное представление "Гроза"',
+    performer: 'Академический театр драмы',
+    date: '2025-07-31',
+  },
+
+  // 📅 Август 2025
+  {
+    id: 17,
+    region: 'Екатеринбург',
+    text: 'Выставка технологий будущего',
+    performer: 'Tech Future Lab',
+    date: '2025-08-01',
+  },
+  {
+    id: 18,
+    region: 'Новосибирск',
+    text: 'Кино под открытым небом',
+    performer: 'Киноклуб "Свет"',
+    date: '2025-08-03',
+  },
+])
+
+const toggleMonthPanel = (event) => {
+  monthPanel.value.toggle(event)
+}
+
+function selectMonth(month) {
+  currentMonthNumber.value = month
+  monthStructureUpdate()
+  monthPanel.value.hide()
+}
+
+const toggleYearPanel = (event) => {
+  yearPanel.value.toggle(event)
+}
+
+function selectYear(year) {
+  currentYear.value = year
+  monthStructureUpdate()
+  yearPanel.value.hide()
+}
 
 function getDayName(date) {
-  return dayNames[date.getDay()];
+  return dayNames[date.getDay()]
 }
 
 function getMonthStructure(year, month) {
-  const weeks = [];
-  let currentDate = getMonday(new Date(year, month, 1));
+  const weeks = []
+  let currentDate = getMonday(new Date(year, month, 1))
 
   do {
-    const weekDays = [];
+    const weekDays = []
 
     for (let i = 0; i < 7; i++) {
-      const current = new Date(currentDate);
+      const current = new Date(currentDate)
 
       weekDays.push({
+        currentDate: current,
         date: formatDate(current),
         year: current.getFullYear(),
         month: current.getMonth(),
         day: current.getDate(),
         dayName: getDayName(current),
+        dayIndex: i,
         titleDate: titleDate(current.getDate(), current.getMonth()),
-        inCurrentMonth: current.getMonth() === month
-      });
+        inCurrentMonth: current.getMonth() === month,
+      })
 
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setDate(currentDate.getDate() + 1)
     }
 
     // Получаем дату первого дня недели
-    const firstDayOfWeek = new Date(weekDays[0].year, weekDays[0].month, weekDays[0].day);
-    const weekNumber = getISOWeekNumber(firstDayOfWeek); // ✅ Передаём первый день недели
+    const firstDayOfWeek = new Date(weekDays[0].year, weekDays[0].month, weekDays[0].day)
+    const weekNumber = getISOWeekNumber(firstDayOfWeek) // ✅ Передаём первый день недели
 
     weeks.push({
       weekNumber,
       year: weekDays[0].year,
-      days: weekDays
-    });
-
+      days: weekDays,
+    })
   } while (
     currentDate.getMonth() === month || // продолжаем пока месяц совпадает
     currentDate.getDay() !== 1 // или до следующего понедельника
-  );
+  )
 
-  return weeks;
+  return weeks
 }
 
 function formatDate(date) {
-    const d = new Date(date);
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${month}-${day}`;
+  const d = new Date(date)
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day}`
 }
 
 function titleDate(day, month) {
-    return `${day} ${MONTHS.genitive[month]}`;
+  return `${day} ${MONTHS.genitive[month]}`
 }
-
-
-/*const reactiveDate = computed(() => {
-  return new Date(currentYear.value, currentMonthNumber.value, 1)
-})*/
 
 const currentMonthName = computed(() => {
   return MONTHS.accusativeFirstUpper[currentMonthNumber.value]
 })
 
 function getISOWeekNumber(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const dayOfWeek = d.getDay();    
-    const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
-    const monday = new Date(d.setDate(diff));
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const dayOfWeek = d.getDay()
+  const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)
+  const monday = new Date(d.setDate(diff))
 
-    const yearStart = new Date(monday.getFullYear(), 0, 1);
-    const yearStartMonday = new Date(yearStart);
-    const startDay = yearStart.getDay();
-    yearStartMonday.setDate(yearStart.getDate() + (startDay === 1 ? 0 : startDay > 1 ? 8 - startDay : 1));
+  const yearStart = new Date(monday.getFullYear(), 0, 1)
+  const yearStartMonday = new Date(yearStart)
+  const startDay = yearStart.getDay()
+  yearStartMonday.setDate(
+    yearStart.getDate() + (startDay === 1 ? 0 : startDay > 1 ? 8 - startDay : 1)
+  )
 
-    const weekNumber = Math.round((((monday - yearStartMonday) / 86400000) + yearStartMonday.getDate() - 1) / 7) + 1;
-    return weekNumber;
+  const weekNumber =
+    Math.round(((monday - yearStartMonday) / 86400000 + yearStartMonday.getDate() - 1) / 7) + 1
+  return weekNumber
 }
 
 function nextMonth() {
   if (currentMonthNumber.value === 11) {
-      currentMonthNumber.value = 0;
-      currentYear.value++; 
-  } 
-  else {
-    currentMonthNumber.value++;
+    currentMonthNumber.value = 0
+    currentYear.value++
+  } else {
+    currentMonthNumber.value++
   }
   monthStructureUpdate()
 }
 
 function prevMonth() {
   if (currentMonthNumber.value === 0) {
-      currentMonthNumber.value = 11;
-      currentYear.value--; 
-  } 
-  else {
-    currentMonthNumber.value--;
+    currentMonthNumber.value = 11
+    currentYear.value--
+  } else {
+    currentMonthNumber.value--
   }
   monthStructureUpdate()
 }
 
 function monthStructureUpdate() {
-  calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value);
-}
-const toggleMonthPanel = (event) => {
-  monthPanel.value.toggleMonthPanel(event)
+  calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value)
 }
 
 // хуки жизненного цикла
-onMounted(() => {  
+onMounted(() => {
   monthStructureUpdate()
 })
 </script>

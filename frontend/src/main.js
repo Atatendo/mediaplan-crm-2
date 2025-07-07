@@ -33,6 +33,7 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import DatePicker from 'primevue/datepicker';
 import DataTable from 'primevue/datatable'
+import Dialog from 'primevue/dialog';
 import Dock from 'primevue/dock';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
@@ -40,6 +41,10 @@ import Menubar from 'primevue/menubar';
 import Message from 'primevue/message'
 import Popover from 'primevue/popover'
 import Password from 'primevue/password'
+import ToggleSwitch from 'primevue/toggleswitch';
+
+//Кастомные компоненты
+import ItemPost from './components/ItemPost.vue'
 
 // Регистрация иконок
 library.add(fas, far, fab);
@@ -69,6 +74,7 @@ app.component('Checkbox', Checkbox);
 app.component('Column', Column);
 app.component('DataTable', DataTable);
 app.component('DatePicker', DatePicker);
+app.component('Dialog', Dialog);
 app.component('Dock', Dock);
 app.component('InputText', InputText);
 app.component('Menu', Menu);
@@ -76,8 +82,9 @@ app.component('Menubar', Menubar);
 app.component('Message', Message);
 app.component('Popover', Popover);
 app.component('Password', Password);
+app.component('ToggleSwitch', ToggleSwitch);
 
-
+app.component('ItemPost', ItemPost)
 
 app.component('FontAwesomeIcon', FontAwesomeIcon);
 app.mount('#app');

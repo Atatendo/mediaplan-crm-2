@@ -2,7 +2,7 @@
   <div class="calendar w-full mx-auto">
     <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
       <div class="flex flex-col w-100">
-        <div class="flex justify-between w-full items-center">
+        <div class="flex justify-between w-full items-center" id="popup" ref="popupContainerRef">
           <Button @click="prevMonth" variant="text" rounded>
             <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
           </Button>
@@ -28,7 +28,7 @@
             <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
           </Button>
         </div>
-        <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }" class="w-100">
+        <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }" class="w-100" :appendTo="popupContainerRef" placement="top-start" >
           <div class="grid grid-cols-3 gap-1">
             <template v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i">
               <button
@@ -175,7 +175,7 @@ const confirm = useConfirm();
 const toast = useToast();
 
 onMounted(() => {
-  
+
 });
 
 /*   Тестирование   */
@@ -184,8 +184,7 @@ const PERFORMER = 'admin';
 
 /*   Управление календарём   */
 
-const isCollapsed = ref(false);
-
+const popupContainerRef = ref(null);
 
 const calendarMode = ref('monthYear');
 const monthPanel = ref();

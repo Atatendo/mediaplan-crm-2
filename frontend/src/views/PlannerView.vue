@@ -1,41 +1,48 @@
 <template>
   <div class="calendar w-full mx-auto">
     <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
-      <Button @click="prevMonth" class="">
-        <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
-      </Button>
+      <div class="flex flex-col w-100">
+        <div class="flex justify-between w-full items-center">
+          <Button @click="prevMonth" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
+          </Button>
 
-      <div class="flex flex-col items-center justify-center min-w-[16ch] font-bold ml-2 mr-2">
-        <span @click="toggleMonthPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
-          {{ currentMonthName }}
-        </span>
-        <span @click="toggleYearPanel" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
-          {{ currentYear }}
-        </span>
-      </div>
-
-      <Button @click="nextMonth">
-        <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
-      </Button>
-      <label for="toggle-all" class="mr-2 ml-2">Развернуть все</label>
-      <ToggleSwitch v-model="toggleAll" inputId="toggle-all" />
-
-      <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }">
-        <div class="grid grid-cols-3 gap-1">
-          <template v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i">
-            <button
-              @click="selectMonth(i)"
-              class="py-1 px-3 rounded hover:bg-blue-100"
-              :class="{ 'bg-emerald-500 text-white': i === currentMonthNumber }"
+          <div class="flex items-center justify-center font-bold ml-2 mr-2">
+            <span
+              v-if="calendarMode === 'monthYear'"
+              @click="toggleMonthPanel"
+              class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded"
             >
-              {{ m }}
-            </button>
-          </template>
-        </div>
-      </Popover>
+              {{ currentMonthName }} {{ currentYear }}
+            </span>
+            <span
+              v-else-if="calendarMode === 'month'"
+              @click="toggleYearPanel"
+              class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded"
+            >
+              {{ currentYear }}
+            </span>
+          </div>
 
-      <Popover ref="yearPanel" :pt="{ root: { class: 'z-50' } }">
-        <div class="grid grid-cols-2 gap-1">
+          <Button @click="nextMonth" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
+          </Button>
+        </div>
+        <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }" class="w-100">
+          <div class="grid grid-cols-3 gap-1">
+            <template v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i">
+              <button
+                @click="selectMonth(i)"
+                class="py-1 px-3 rounded hover:bg-blue-100"
+                :class="{ 'bg-emerald-500 text-white': i === currentMonthNumber }"
+              >
+                {{ m }}
+              </button>
+            </template>
+          </div>
+          
+        </Popover>
+        <div  class="grid grid-cols-2 gap-1">
           <template v-for="y in YEARS" :key="y">
             <button
               @click="selectYear(y)"
@@ -46,6 +53,10 @@
             </button>
           </template>
         </div>
+      </div>     
+
+      <Popover ref="yearPanel" :pt="{ root: { class: 'z-50' } }">
+        
       </Popover>
     </div>
     <Accordion multiple class="mt-2">
@@ -74,9 +85,13 @@
                   :text="event.text"
                   :performer="event.performer"
                 />
-                <Button class="mx-auto max-w-fit" :key="day.date" @click="() => addEvent(day.currentDate)">
+                <Button
+                  class="mx-auto max-w-fit"
+                  :key="day.date"
+                  @click="() => addEvent(day.currentDate)"
+                >
                   <FontAwesomeIcon :icon="['fas', 'plus']" />
-                </Button>                
+                </Button>
               </div>
             </div>
           </div>
@@ -84,60 +99,198 @@
       </AccordionPanel>
     </Accordion>
     <Dialog
-                  v-model:visible="visible"
-                  modal
-                  closeOnEscape
-                  header="Добавить мероприятие"
-                  :pt="{
-      headerActions: {
-        style: { display: 'none' }
-      }
-    }"
-                >
-                <div>
-                  <DatePicker  v-model="selectedDate" dateFormat="dd.mm.yy" :showIcon="true" class="w-full"/>
-                </div>
-                  <div class="flex items-center gap-4 mb-4">
-                    <label for="username" class="font-semibold w-24">Username</label>
-                    <InputText id="username" class="flex-auto" autocomplete="off" />
-                  </div>
-                  <div class="flex items-center gap-4 mb-8">
-                    <label for="email" class="font-semibold w-24">Email</label>
-                    <InputText id="email" class="flex-auto" autocomplete="off" />
-                  </div>
-                  <div class="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      label="Cancel"
-                      severity="secondary"
-                      @click="visible = false"
-                    ></Button>
-                    <Button type="button" label="Save" @click="visible = false"></Button>
-                  </div>
-                </Dialog>
+      v-model:visible="visible"
+      modal
+      closeOnEscape
+      header="Добавить мероприятие"
+      :pt="{
+        headerActions: {
+          style: { display: 'none' },
+        },
+      }"
+      @update:visible="onHide"
+      :style="{ width: '25rem' }"
+    >
+      <div class="flex flex-col gap-4">
+        <div>
+          <DatePicker
+            v-model="selectedDate"
+            dateFormat="dd.mm.yy"
+            :showIcon="true"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <Select
+            v-if="PERFORMER === 'admin'"
+            v-model="selectedCity"
+            :options="cities"
+            optionLabel="name"
+            placeholder="Выберите регион"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <Textarea
+            v-model="value3"
+            size="large"
+            placeholder="Введите описание мероприятия"
+            rows="6"
+            class="w-full"
+          />
+        </div>
+        <div>
+          <Select
+            v-model="selectedPerformer"
+            :options="performers"
+            optionLabel="name"
+            placeholder="Выберите исполнителя"
+            class="w-full"
+          />
+        </div>
+        <div class="flex justify-center gap-4">
+          <Button
+            type="button"
+            label="Отменить"
+            severity="secondary"
+            @click="visible = false"
+          ></Button>
+          <Button type="button" label="Добавить" @click="visible = false"></Button>
+        </div>
+      </div>
+    </Dialog>
+    <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { MONTHS } from '@/constants/date'
+import { ref, onMounted, computed } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
-const currentDate = ref(new Date())
-const currentMonthNumber = ref(currentDate.value.getMonth())
-const currentYear = ref(currentDate.value.getFullYear())
-const calendarData = ref(null)
-const monthPanel = ref()
-const yearPanel = ref()
+import { MONTHS } from '@/constants/date';
 
-const visible = ref(false)
-const selectedDate = ref(null)
 
-function addEvent(date) {
-  visible.value = true;
-  selectedDate.value = date;
+const confirm = useConfirm();
+const toast = useToast();
+
+onMounted(() => {
+  
+});
+
+/*   Тестирование   */
+const PERFORMER = 'admin';
+
+
+/*   Управление календарём   */
+
+const isCollapsed = ref(false);
+
+
+const calendarMode = ref('monthYear');
+const monthPanel = ref();
+const yearPanel = ref();
+
+const YEARS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028']
+
+
+
+
+const toggleMonthPanel = (event) => {
+  monthPanel.value.toggle(event)
 }
 
-const toggleAll = ref(false)
+function selectMonth(month) {
+  currentMonthNumber.value = month
+  monthStructureUpdate()
+  monthPanel.value.hide()
+}
+
+const toggleYearPanel = (event) => {
+  yearPanel.value.toggle(event)
+}
+
+function selectYear(year) {
+  currentYear.value = year
+  monthStructureUpdate()
+  yearPanel.value.hide()
+}
+
+
+function nextMonth() {
+  if (currentMonthNumber.value === 11) {
+    currentMonthNumber.value = 0
+    currentYear.value++
+  } else {
+    currentMonthNumber.value++
+  }
+  monthStructureUpdate()
+}
+
+function prevMonth() {
+  if (currentMonthNumber.value === 0) {
+    currentMonthNumber.value = 11
+    currentYear.value--
+  } else {
+    currentMonthNumber.value--
+  }
+  monthStructureUpdate()
+}
+
+
+/*   Модальное окно добавление записи   */
+
+const selectedCity = ref();
+const selectedPerformer = ref();
+const selectedDate = ref(null);
+const value3 = ref();
+
+const visible = ref(false);
+
+function addEvent(date) {
+  visible.value = true
+  selectedDate.value = date
+}
+
+function clearModal() {
+  selectedCity.value = null
+}
+
+function onHide() {
+  confirm1()
+}
+
+const confirm1 = () => {
+  confirm.require({
+    message: 'Are you sure you want to proceed?',
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Save',
+    },
+    accept: () => {
+      toast.add({ severity: 'info', summary: 'Confirmed', detail: 'You have accepted', life: 3000 })
+    },
+    reject: () => {
+      toast.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 })
+    },
+  })
+}
+
+
+/*   Отрисовка сетки мероприятий   */
+
+
+const currentDate = ref(new Date())
+const currentMonthNumber = ref(currentDate.value.getMonth());
+const currentYear = ref(currentDate.value.getFullYear());
+const calendarData = ref(null);
+
 
 function getMonday(date) {
   const d = new Date(date)
@@ -148,7 +301,7 @@ function getMonday(date) {
 
 const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
 
-const YEARS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028']
+
 const eventsByDate = computed(() => {
   const map = {}
   eventsData.value.forEach((event) => {
@@ -158,6 +311,113 @@ const eventsByDate = computed(() => {
   })
   return map
 })
+
+
+
+function getDayName(date) {
+  return dayNames[date.getDay()]
+}
+
+function getMonthStructure(year, month) {
+  const weeks = []
+  let currentDate = getMonday(new Date(year, month, 1))
+
+  do {
+    const weekDays = []
+
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(currentDate)
+
+      weekDays.push({
+        currentDate: current,
+        date: formatDate(current),
+        year: current.getFullYear(),
+        month: current.getMonth(),
+        day: current.getDate(),
+        dayName: getDayName(current),
+        dayIndex: i,
+        titleDate: titleDate(current.getDate(), current.getMonth()),
+        inCurrentMonth: current.getMonth() === month,
+      })
+
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+
+    // Получаем дату первого дня недели
+    const firstDayOfWeek = new Date(weekDays[0].year, weekDays[0].month, weekDays[0].day)
+    const weekNumber = getISOWeekNumber(firstDayOfWeek) // ✅ Передаём первый день недели
+
+    weeks.push({
+      weekNumber,
+      year: weekDays[0].year,
+      days: weekDays,
+    })
+  } while (
+    currentDate.getMonth() === month || // продолжаем пока месяц совпадает
+    currentDate.getDay() !== 1 // или до следующего понедельника
+  )
+
+  return weeks
+}
+
+function formatDate(date) {
+  const d = new Date(date)
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day}`
+}
+
+function titleDate(day, month) {
+  return `${day} ${MONTHS.genitive[month]}`
+}
+
+const currentMonthName = computed(() => {
+  return MONTHS.accusativeFirstUpper[currentMonthNumber.value]
+})
+
+function getISOWeekNumber(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const dayOfWeek = d.getDay()
+  const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)
+  const monday = new Date(d.setDate(diff))
+
+  const yearStart = new Date(monday.getFullYear(), 0, 1)
+  const yearStartMonday = new Date(yearStart)
+  const startDay = yearStart.getDay()
+  yearStartMonday.setDate(
+    yearStart.getDate() + (startDay === 1 ? 0 : startDay > 1 ? 8 - startDay : 1)
+  )
+
+  const weekNumber =
+    Math.round(((monday - yearStartMonday) / 86400000 + yearStartMonday.getDate() - 1) / 7) + 1
+  return weekNumber
+}
+
+
+function monthStructureUpdate() {
+  calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value)
+}
+
+// хуки жизненного цикла
+onMounted(() => {
+  monthStructureUpdate()
+})
+
+const performers = ref([
+  { name: 'Иванов', code: 'NY' },
+  { name: 'Петров', code: 'RM' },
+  { name: 'Сидоров', code: 'LDN' },
+  { name: 'Зайцев', code: 'IST' },
+])
+
+const cities = ref([
+  { name: 'New York', code: 'NY' },
+  { name: 'Rome', code: 'RM' },
+  { name: 'London', code: 'LDN' },
+  { name: 'Istanbul', code: 'IST' },
+  { name: 'Paris', code: 'PRS' },
+])
 
 const eventsData = ref([
   // 📅 Июнь 2025
@@ -292,133 +552,4 @@ const eventsData = ref([
     date: '2025-08-03',
   },
 ])
-
-const toggleMonthPanel = (event) => {
-  monthPanel.value.toggle(event)
-}
-
-function selectMonth(month) {
-  currentMonthNumber.value = month
-  monthStructureUpdate()
-  monthPanel.value.hide()
-}
-
-const toggleYearPanel = (event) => {
-  yearPanel.value.toggle(event)
-}
-
-function selectYear(year) {
-  currentYear.value = year
-  monthStructureUpdate()
-  yearPanel.value.hide()
-}
-
-function getDayName(date) {
-  return dayNames[date.getDay()]
-}
-
-function getMonthStructure(year, month) {
-  const weeks = []
-  let currentDate = getMonday(new Date(year, month, 1))
-
-  do {
-    const weekDays = []
-
-    for (let i = 0; i < 7; i++) {
-      const current = new Date(currentDate)
-
-      weekDays.push({
-        currentDate: current,
-        date: formatDate(current),
-        year: current.getFullYear(),
-        month: current.getMonth(),
-        day: current.getDate(),
-        dayName: getDayName(current),
-        dayIndex: i,
-        titleDate: titleDate(current.getDate(), current.getMonth()),
-        inCurrentMonth: current.getMonth() === month,
-      })
-
-      currentDate.setDate(currentDate.getDate() + 1)
-    }
-
-    // Получаем дату первого дня недели
-    const firstDayOfWeek = new Date(weekDays[0].year, weekDays[0].month, weekDays[0].day)
-    const weekNumber = getISOWeekNumber(firstDayOfWeek) // ✅ Передаём первый день недели
-
-    weeks.push({
-      weekNumber,
-      year: weekDays[0].year,
-      days: weekDays,
-    })
-  } while (
-    currentDate.getMonth() === month || // продолжаем пока месяц совпадает
-    currentDate.getDay() !== 1 // или до следующего понедельника
-  )
-
-  return weeks
-}
-
-function formatDate(date) {
-  const d = new Date(date)
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${month}-${day}`
-}
-
-function titleDate(day, month) {
-  return `${day} ${MONTHS.genitive[month]}`
-}
-
-const currentMonthName = computed(() => {
-  return MONTHS.accusativeFirstUpper[currentMonthNumber.value]
-})
-
-function getISOWeekNumber(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  const dayOfWeek = d.getDay()
-  const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)
-  const monday = new Date(d.setDate(diff))
-
-  const yearStart = new Date(monday.getFullYear(), 0, 1)
-  const yearStartMonday = new Date(yearStart)
-  const startDay = yearStart.getDay()
-  yearStartMonday.setDate(
-    yearStart.getDate() + (startDay === 1 ? 0 : startDay > 1 ? 8 - startDay : 1)
-  )
-
-  const weekNumber =
-    Math.round(((monday - yearStartMonday) / 86400000 + yearStartMonday.getDate() - 1) / 7) + 1
-  return weekNumber
-}
-
-function nextMonth() {
-  if (currentMonthNumber.value === 11) {
-    currentMonthNumber.value = 0
-    currentYear.value++
-  } else {
-    currentMonthNumber.value++
-  }
-  monthStructureUpdate()
-}
-
-function prevMonth() {
-  if (currentMonthNumber.value === 0) {
-    currentMonthNumber.value = 11
-    currentYear.value--
-  } else {
-    currentMonthNumber.value--
-  }
-  monthStructureUpdate()
-}
-
-function monthStructureUpdate() {
-  calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value)
-}
-
-// хуки жизненного цикла
-onMounted(() => {
-  monthStructureUpdate()
-})
 </script>

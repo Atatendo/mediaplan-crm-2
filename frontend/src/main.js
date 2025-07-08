@@ -6,6 +6,10 @@ import './index.css';
 import './assets/scss/main.scss'
 import { ru } from './locales/ru';
 
+
+import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
+
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -30,6 +34,7 @@ import Button from 'primevue/button';
 import Calendar from 'primevue/calendar';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
+import ConfirmDialog from 'primevue/confirmdialog'
 import Column from 'primevue/column';
 import DatePicker from 'primevue/datepicker';
 import DataTable from 'primevue/datatable'
@@ -39,9 +44,17 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import Menubar from 'primevue/menubar';
 import Message from 'primevue/message'
-import Popover from 'primevue/popover'
+import Panel from 'primevue/panel'
 import Password from 'primevue/password'
+import Popover from 'primevue/popover'
+import Select from 'primevue/select';
+import Textarea from 'primevue/textarea';
+import Toast from 'primevue/toast';
 import ToggleSwitch from 'primevue/toggleswitch';
+
+
+
+
 
 //Кастомные компоненты
 import ItemPost from './components/ItemPost.vue'
@@ -60,6 +73,10 @@ app.use(PrimeVue, {
 });
 
 app.use(router);
+app.use(ConfirmationService);
+app.use(ToastService);
+
+
 
 app.component('Accordion', Accordion);
 app.component('AccordionPanel', AccordionPanel);
@@ -72,6 +89,7 @@ app.component('Calendar', Calendar);
 app.component('Card', Card);
 app.component('Checkbox', Checkbox);
 app.component('Column', Column);
+app.component('ConfirmDialog', ConfirmDialog)
 app.component('DataTable', DataTable);
 app.component('DatePicker', DatePicker);
 app.component('Dialog', Dialog);
@@ -80,8 +98,12 @@ app.component('InputText', InputText);
 app.component('Menu', Menu);
 app.component('Menubar', Menubar);
 app.component('Message', Message);
-app.component('Popover', Popover);
 app.component('Password', Password);
+app.component('Panel', Panel);
+app.component('Popover', Popover);
+app.component('Select', Select);
+app.component('Textarea', Textarea);
+app.component('Toast', Toast);
 app.component('ToggleSwitch', ToggleSwitch);
 
 app.component('ItemPost', ItemPost)

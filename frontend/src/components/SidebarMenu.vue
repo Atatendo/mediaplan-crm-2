@@ -2,7 +2,7 @@
   <div class="h-screen w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col">
     <!-- Логотип -->
     <div class="flex items-center gap-2 mb-8">
-      <span class="text-xl font-semibold">MEDIAPLAN-CRM<span class="text-primary"></span></span>
+      <span class="text-xl font-semibold">ИС МЕДИАПЛАН<span class="text-primary"></span></span>
     </div>
 
     <!-- Меню -->

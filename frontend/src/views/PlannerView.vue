@@ -1,63 +1,69 @@
 <template>
   <div class="calendar w-full mx-auto">
     <div class="flex items-center justify-left mx-auto p-2 border-0 rounded shadow-none">
-      <div class="flex flex-col w-100">
-        <div class="flex justify-between w-full items-center" id="popup" ref="popupContainerRef">
+      <div class="flex flex-col w-100" ref="popupContainerRef">
+        <!-- Отрисовка календаря обычный режим -->
+        <div v-if="calendarMode === 'monthYear'" class="flex justify-between w-full items-center">
           <Button @click="prevMonth" variant="text" rounded>
             <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
           </Button>
-
           <div class="flex items-center justify-center font-bold ml-2 mr-2">
-            <span
-              v-if="calendarMode === 'monthYear'"
-              @click="toggleMonthPanel"
-              class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded"
-            >
+            <span @click="toggleMonthPanel($event)" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
               {{ currentMonthName }} {{ currentYear }}
             </span>
-            <span
-              v-else-if="calendarMode === 'month'"
-              @click="toggleYearPanel"
-              class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded"
-            >
-              {{ currentYear }}
-            </span>
           </div>
-
           <Button @click="nextMonth" variant="text" rounded>
             <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
           </Button>
         </div>
-        <Popover ref="monthPanel" :pt="{ root: { class: 'z-50' } }" class="w-100" :appendTo="popupContainerRef" placement="top-start" >
-          <div class="grid grid-cols-3 gap-1">
-            <template v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i">
-              <button
-                @click="selectMonth(i)"
-                class="py-1 px-3 rounded hover:bg-blue-100"
-                :class="{ 'bg-emerald-500 text-white': i === currentMonthNumber }"
-              >
-                {{ m }}
-              </button>
-            </template>
-          </div>
+        <!-- Отрисовка календаря месяцы года -->
+        <div v-if="calendarMode === 'month'" class="flex justify-center w-full items-center">
           
-        </Popover>
-        <div  class="grid grid-cols-2 gap-1">
-          <template v-for="y in YEARS" :key="y">
-            <button
-              @click="selectYear(y)"
-              class="py-1 px-3 rounded hover:bg-blue-100"
-              :class="{ 'bg-emerald-500 text-white': y === currentYear }"
-            >
+          <div class="flex items-center justify-center font-bold ml-2 mr-2">            
+            <span @click="toggleYearPanel($event)" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
+              {{ currentYear }}
+            </span>
+          </div>
+        </div>
+        <!-- Отрисовка календаря декада -->
+        <div v-if="calendarMode === 'decade'" class="flex justify-center w-full items-center">
+          <div class="flex items-center justify-center font-bold ml-2 mr-2">
+            <span @click="toggleMonthPanel($event)" class="px-2 py-1 cursor-pointer hover:bg-gray-200 rounded">
+              {{ startDecade }} &ndash; {{ endDecade }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <Popover ref="monthPanel" :unstyled="true" :pt="{ root: { class: 'w-100 z-50 border-1 border-gray-200 bg-white shadow' } }" @show="showMonthPanel" @hide="hideMonthPanel">
+        <div class="flex justify-between">
+          <Button @click="prevYear" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
+          </Button>
+          <div class="grid grid-cols-3 gap-1 p-4">
+            <button v-for="(m, i) in MONTHS.accusativeFirstUpper" :key="i" @click="selectMonth(i)" class="py-1 px-3 rounded hover:bg-blue-100" :class="{ 'bg-emerald-500 text-white shadow': i === currentMonthNumber }" >
+              {{ m }}
+            </button>
+          </div>       
+          <Button @click="nextYear" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
+          </Button> 
+        </div>        
+      </Popover>
+      <Popover ref="yearPanel" :unstyled="true" :pt="{ root: { class: 'w-100 z-50 border-1 border-gray-200 bg-white' } }" @show="showYearPanel" @hide="hideYearPanel">        
+        <div class="flex justify-between">
+          <Button @click="prevDecade" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-left']" class="m font-light" />
+          </Button>
+          <div class="grid grid-cols-2 gap-1 w-full p-4">
+            <button v-for="y in YEARS" :key="y" @click="selectYear(y)" class="py-1 px-3 rounded hover:bg-blue-100" :class="{ 'bg-emerald-500 text-white': y === currentYear }">
               {{ y }}
             </button>
-          </template>
+          </div>
+          <Button @click="nextDecade" variant="text" rounded>
+            <FontAwesomeIcon :icon="['fas', 'angle-right']" class="m font-light" />
+          </Button>
         </div>
-      </div>     
-
-      <Popover ref="yearPanel" :pt="{ root: { class: 'z-50' } }">
-        
-      </Popover>
+      </Popover>      
     </div>
     <Accordion multiple class="mt-2">
       <AccordionPanel v-for="week in calendarData" :value="week.weekNumber" :key="week.weekNumber">
@@ -164,39 +170,59 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
+import { ref, onMounted, computed, watchEffect } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 
-import { MONTHS } from '@/constants/date';
+import { MONTHS } from '@/constants/date'
 
-
-const confirm = useConfirm();
-const toast = useToast();
+const confirm = useConfirm()
+const toast = useToast()
 
 onMounted(() => {
-
-});
+})
 
 /*   Тестирование   */
-const PERFORMER = 'admin';
-
+const PERFORMER = 'admin'
 
 /*   Управление календарём   */
 
-const popupContainerRef = ref(null);
+const popupContainerRef = ref(null)
+const isPopoverVisible = ref(false)
+const monthPanel = ref()
+const yearPanel = ref()
 
-const calendarMode = ref('monthYear');
-const monthPanel = ref();
-const yearPanel = ref();
+const isMonthPanelShow = ref(false);
+const isYearPanelShow = ref(false);
 
-const YEARS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028']
+const calendarMode = ref('monthYear')
 
+const decadeOffset = ref(0); 
 
-
+watchEffect(() => {
+  if (!isMonthPanelShow.value && !isYearPanelShow.value) {
+    calendarMode.value = 'monthYear';
+    decadeOffset.value = 0;
+  }
+  else if (isMonthPanelShow.value && !isYearPanelShow.value) {
+    calendarMode.value = 'month';
+  }
+  else if (!isMonthPanelShow.value && isYearPanelShow.value) {
+    calendarMode.value = 'decade';
+  }
+})
 
 const toggleMonthPanel = (event) => {
-  monthPanel.value.toggle(event)
+  const customTarget = popupContainerRef.value;
+  monthPanel.value.toggle(event, customTarget)
+}
+
+const showMonthPanel = () => {
+  isMonthPanelShow.value = true;
+}
+
+const hideMonthPanel = () => {
+  isMonthPanelShow.value = false;
 }
 
 function selectMonth(month) {
@@ -204,17 +230,6 @@ function selectMonth(month) {
   monthStructureUpdate()
   monthPanel.value.hide()
 }
-
-const toggleYearPanel = (event) => {
-  yearPanel.value.toggle(event)
-}
-
-function selectYear(year) {
-  currentYear.value = year
-  monthStructureUpdate()
-  yearPanel.value.hide()
-}
-
 
 function nextMonth() {
   if (currentMonthNumber.value === 11) {
@@ -236,15 +251,69 @@ function prevMonth() {
   monthStructureUpdate()
 }
 
+const toggleYearPanel = (event) => {
+  const customTarget = popupContainerRef.value;
+  yearPanel.value.toggle(event, customTarget);
+}
+
+const showYearPanel = () => {
+  isYearPanelShow.value = true;
+}
+
+const hideYearPanel = () => {
+  isYearPanelShow.value = false;
+}
+
+function selectYear(year) {
+  currentYear.value = year
+  monthStructureUpdate()
+  yearPanel.value.hide()
+}
+
+function nextYear() {
+  currentYear.value++
+  monthStructureUpdate()
+}
+
+function prevYear() {
+  currentYear.value--
+  monthStructureUpdate()
+}
+
+const startDecade = computed(() => {
+  const base = Math.floor(currentYear.value / 10) * 10;
+  return base + decadeOffset.value;
+});
+
+const endDecade = computed(() => { 
+  const end = startDecade.value + 9;
+  return end;
+})
+
+const YEARS = computed(() => {
+  const decade = [];
+  for (let i = 0; i < 10; i++) {
+    decade.push(startDecade.value + i);
+  }
+  return decade;
+});
+
+function nextDecade() {
+  decadeOffset.value += 10;
+}
+
+function prevDecade() {
+  decadeOffset.value -= 10;
+}
 
 /*   Модальное окно добавление записи   */
 
-const selectedCity = ref();
-const selectedPerformer = ref();
-const selectedDate = ref(null);
-const value3 = ref();
+const selectedCity = ref()
+const selectedPerformer = ref()
+const selectedDate = ref(null)
+const value3 = ref()
 
-const visible = ref(false);
+const visible = ref(false)
 
 function addEvent(date) {
   visible.value = true
@@ -281,15 +350,12 @@ const confirm1 = () => {
   })
 }
 
-
 /*   Отрисовка сетки мероприятий   */
 
-
 const currentDate = ref(new Date())
-const currentMonthNumber = ref(currentDate.value.getMonth());
-const currentYear = ref(currentDate.value.getFullYear());
-const calendarData = ref(null);
-
+const currentMonthNumber = ref(currentDate.value.getMonth())
+const currentYear = ref(currentDate.value.getFullYear())
+const calendarData = ref(null)
 
 function getMonday(date) {
   const d = new Date(date)
@@ -300,7 +366,6 @@ function getMonday(date) {
 
 const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
 
-
 const eventsByDate = computed(() => {
   const map = {}
   eventsData.value.forEach((event) => {
@@ -310,8 +375,6 @@ const eventsByDate = computed(() => {
   })
   return map
 })
-
-
 
 function getDayName(date) {
   return dayNames[date.getDay()]
@@ -392,7 +455,6 @@ function getISOWeekNumber(date) {
     Math.round(((monday - yearStartMonday) / 86400000 + yearStartMonday.getDate() - 1) / 7) + 1
   return weekNumber
 }
-
 
 function monthStructureUpdate() {
   calendarData.value = getMonthStructure(currentYear.value, currentMonthNumber.value)

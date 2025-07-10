@@ -5,6 +5,7 @@ import Ripple from 'primevue/ripple'
 import './index.css';
 import './assets/scss/main.scss'
 import { ru } from './locales/ru';
+import 'primeicons/primeicons.css';
 
 
 import ConfirmationService from 'primevue/confirmationservice';
@@ -23,6 +24,7 @@ config.autoAddCss = false;
 // PrimeVue
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
+import Tooltip from 'primevue/tooltip';
 
 import Accordion from 'primevue/accordion';
 import AccordionPanel from 'primevue/accordionpanel';
@@ -44,9 +46,9 @@ import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import Menubar from 'primevue/menubar';
 import Message from 'primevue/message'
-import Panel from 'primevue/panel'
-import Password from 'primevue/password'
-import Popover from 'primevue/popover'
+import Panel from 'primevue/panel';
+import Password from 'primevue/password';
+import Popover from 'primevue/popover';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
@@ -57,7 +59,8 @@ import ToggleSwitch from 'primevue/toggleswitch';
 
 
 //Кастомные компоненты
-import ItemPost from './components/ItemPost.vue'
+import ItemPost from './components/ItemPost.vue';
+import CalendarSelector from './components/CalendarSelector.vue';
 
 // Регистрация иконок
 library.add(fas, far, fab);
@@ -65,6 +68,9 @@ library.add(fas, far, fab);
 const app = createApp(App);
 
 app.directive('ripple', Ripple); 
+app.directive('tooltip', Tooltip);
+
+
 app.use(PrimeVue, {
     theme: {        
         preset: Aura    
@@ -75,7 +81,6 @@ app.use(PrimeVue, {
 app.use(router);
 app.use(ConfirmationService);
 app.use(ToastService);
-
 
 
 app.component('Accordion', Accordion);
@@ -106,7 +111,9 @@ app.component('Textarea', Textarea);
 app.component('Toast', Toast);
 app.component('ToggleSwitch', ToggleSwitch);
 
-app.component('ItemPost', ItemPost)
+
+app.component('ItemPost', ItemPost);
+app.component('CalendarSelector', CalendarSelector);
 
 app.component('FontAwesomeIcon', FontAwesomeIcon);
 app.mount('#app');
